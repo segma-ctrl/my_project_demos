@@ -6,6 +6,7 @@ const router = useRouter()
 
 const username = ref('')
 const password = ref('')
+const role = ref(0) // 默认学生
 
 const handleRegister = () => {
   router.push('/register')
@@ -18,7 +19,7 @@ const handleLogin = async () => {
   }
 
   try {
-    const res = await fetch('http://localhost:8080/reg/login', {
+    const res = await fetch('http://localhost:8080/api/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,24 +27,26 @@ const handleLogin = async () => {
       body: JSON.stringify({
         username: username.value,
         password: password.value,
+        role: role.value,
       }),
     })
 
-    const text = await res.text()
-
     if (!res.ok) {
-      // HTTP 状态异常，直接视为失败
-      alert(text || '登录失败，请稍后重试')
+      alert('登录失败，请检查后端服务')
       return
     }
 
-    // 根据后端返回的字符串判断是否登录成功
-    // 假设后端登录成功时返回 "success"（你可以根据实际返回修改这里的字符串）
-    if (text === '登录成功') {
-      alert(text)
+    const result = await res.json()
+    if (result.status) {
+      alert(result.message)
+      // 存储登录状态
+      localStorage.setItem('user', JSON.stringify({
+        username: username.value,
+        role: role.value
+      }))
       await router.push('/home')
     } else {
-      alert(text)
+      alert(result.message || '登录失败')
     }
   } catch (e) {
     console.error(e)
@@ -79,6 +82,21 @@ const handleLogin = async () => {
         />
       </div>
 
+      <div class="form-item">
+        <label class="label">登录角色</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" v-model="role" :value="0" /> 学生
+          </label>
+          <label class="radio-label">
+            <input type="radio" v-model="role" :value="1" /> 教师
+          </label>
+          <label class="radio-label">
+            <input type="radio" v-model="role" :value="2" /> 管理员
+          </label>
+        </div>
+      </div>
+
       <div class="btn-group">
         <button type="button" class="btn secondary" @click="handleRegister">
           注册
@@ -104,84 +122,100 @@ const handleLogin = async () => {
 
 .title {
   margin-bottom: 1.5rem;
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: #111827;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a202c;
+  letter-spacing: -0.025em;
 }
 
 .card {
   width: 100%;
-  max-width: 420px;
-  padding: 1.75rem 2rem;
-  border-radius: 1rem;
+  max-width: 440px;
+  padding: 2.5rem;
+  border-radius: 1.25rem;
   background: #ffffff;
-  box-shadow:
-    0 10px 30px rgba(15, 23, 42, 0.08),
-    0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .form-item {
   display: flex;
   flex-direction: column;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .label {
-  margin-bottom: 0.4rem;
-  font-size: 0.9rem;
-  color: #6b7280;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4a5568;
 }
 
 .input {
-  padding: 0.55rem 0.75rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #e2e8f0;
   outline: none;
-  font-size: 0.95rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-size: 1rem;
+  transition: all 0.2s;
 }
 
 .input:focus {
   border-color: #4f46e5;
-  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.18);
+  ring: 2px solid rgba(79, 70, 229, 0.1);
+}
+
+.radio-group {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #2d3748;
+  cursor: pointer;
 }
 
 .btn-group {
   display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .btn {
   flex: 1;
-  padding: 0.6rem 0.8rem;
-  border-radius: 0.6rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
   border: none;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+  transition: all 0.2s;
 }
 
 .btn.primary {
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: #ffffff;
+  background: #4f46e5;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #4338ca;
 }
 
 .btn.secondary {
-  background: #e5e7eb;
-  color: #374151;
+  background: #f7fafc;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
 }
 
-.btn:hover {
-  filter: brightness(1.03);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
-}
-
-.btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16);
+.btn.secondary:hover {
+  background: #edf2f7;
 }
 </style>
+
 

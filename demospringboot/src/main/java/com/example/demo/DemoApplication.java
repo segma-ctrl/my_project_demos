@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@EnableScheduling
-@MapperScan("com.example.demo.Mapper")
+//@EnableScheduling   定时任务
+@MapperScan("com.example.demo.**.mapper")
 public class DemoApplication {
 
 	public static void main(String[] args) {

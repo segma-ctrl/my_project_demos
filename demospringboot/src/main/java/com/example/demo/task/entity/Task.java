@@ -1,8 +1,12 @@
-package com.example.demo.entity;
+package com.example.demo.task.entity;
 
 public class Task {
     private int TaskId;
     private int TaskCount;
+    public Task(int taskId, int taskCount) {
+        TaskId = taskId;
+        TaskCount = taskCount;
+    }
 
     public int getTaskId() {
         return TaskId;

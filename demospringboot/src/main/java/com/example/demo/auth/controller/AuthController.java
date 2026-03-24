@@ -1,13 +1,15 @@
-package com.example.demo.Controller;
-import com.example.demo.Dto.LoginDto;
-import com.example.demo.Dto.RegisterDto;
-import com.example.demo.Mapper.StudentMapper;
-import com.example.demo.Mapper.TeacherMapper;
-import com.example.demo.Mapper.UserMapper;
-import com.example.demo.entity.User;
+package com.example.demo.auth.controller;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.demo.auth.enums.UserRole;
+import com.example.demo.auth.service.StudentService;
+import com.example.demo.auth.service.TeacherService;
+import com.example.demo.auth.service.UserService;
+import com.example.demo.common.dto.LoginDto;
+import com.example.demo.common.dto.RegisterDto;
+import com.example.demo.auth.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,19 +20,20 @@ import java.util.Map;
 
 @Tag(name = "用户登录注册接口",description = "根据用户id，用户名，角色进行登录和注册管理")
 @RestController
-public class RLController {
-    @Autowired
-    UserMapper userMapper;
-    @Autowired
-    StudentMapper studentMapper;
-    @Autowired
-    TeacherMapper teacherMapper;
+@RequiredArgsConstructor
+public class AuthController {
+    private final UserService userService;
+    private final StudentService studentService;
+    private final TeacherService teacherService;
     //登录
     @Operation(summary = "用户登录",description = "根据用户名，密码，角色进行登录")
     @PostMapping("api/login")
     public Map<String,Object> Login(@RequestBody LoginDto requestData){
         Map<String, Object> result = new HashMap<>();
-        User user = userMapper.queryByusername(requestData.getUsername());
+        User user=userService.getOne(
+                new LambdaQueryWrapper<User>()
+                        .eq(User::getUsername, requestData.getUsername())
+        );
         if(user==null){
             result.put("status", false);
             result.put("message", "用户不存在");
@@ -54,12 +57,14 @@ public class RLController {
     public Map<String, Object> Register(@RequestBody RegisterDto requestData) {
         Map<String, Object> result = new HashMap<>();
         //是否存在
-        if((requestData.getRole()==0&&studentMapper.queryStudentById(requestData.getId())==null)||(requestData.getRole()==1&&teacherMapper.queryTeacherById(requestData.getId())==null)){
+        if((requestData.getRole()==UserRole.STUDENT&&studentService.getById(requestData.getId())==null)
+                ||(requestData.getRole()==UserRole.TEACHER&&teacherService.getById(requestData.getId())==null)){
             result.put("status",false);
             result.put("message", "此id不存在");
         }
-        else{//存在,判断是否已注册，已注册返回注册失败，未注册返回注册成功
-            if(userMapper.queryByusername(requestData.getUsername())!= null){
+        else{
+            //存在,判断是否已注册，已注册返回注册失败，未注册返回注册成功
+            if(userService.getOne(new LambdaQueryWrapper<User>().eq(User::getUsername, requestData.getUsername()))!= null){
                 result.put("status",false);
                 result.put("message", "用户已存在");
             }else{
@@ -69,8 +74,9 @@ public class RLController {
                 user.setRole(requestData.getRole());
                 user.setPhoneNumber(requestData.getPhoneNumber());
                 user.setId(requestData.getId());
-                user.setCreate_time(new Date());
-                if(userMapper.insertuser(user)){
+                user.setCreateTime(new Date());
+                if(userService.save(user)){
+                    //插入数据成功
                     result.put("status",true);
                     result.put("message", "注册成功");
                 }else {

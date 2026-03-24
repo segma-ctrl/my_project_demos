@@ -1,5 +1,6 @@
-package com.example.demo.Dto;
+package com.example.demo.common.dto;
 
+import com.example.demo.auth.enums.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "注册请求数据")
@@ -13,7 +14,7 @@ public class RegisterDto {
     @Schema(description = "密码")
     private String password;
     @Schema(description = "角色")
-    private int role;
+    private UserRole role;
     @Schema(description = "手机号")
     private String phoneNumber;
 
@@ -49,11 +50,11 @@ public class RegisterDto {
         this.password = password;
     }
 
-    public int getRole() {
+    public UserRole getRole() {
         return role;
     }
 
-    public void setRole(int role) {
+    public void setRole(UserRole role) {
         this.role = role;
     }
 

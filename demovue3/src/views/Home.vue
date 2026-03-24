@@ -1,133 +1,306 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
-// 当前定时任务已执行次数，由后端返回
-const runCount = ref<number | null>(null)
-const loading = ref(false)
-const errorMessage = ref('')
+import WelcomeIndex from '../components/booking/WelcomeIndex.vue'
+import BookingManager from '../components/booking/BookingManager.vue'
+import SystemSettings from '../components/booking/SystemSettings.vue'
+import UserProfile from '../components/booking/UserProfile.vue'
 
-const handleQuery = async () => {
-  loading.value = true
-  errorMessage.value = ''
-  try {
-    // 约定后端提供接口，例如：
-    // GET http://localhost:8080/task/count
-    // 返回形如：{ "count": 5 }
-    const res = await fetch('http://localhost:8080/task/count')
-    if (!res.ok) {
-      throw new Error(`查询失败：${res.status}`)
-    }
-    const data = await res.json()
-    if (data == null || typeof data.count !== 'number') {
-      throw new Error('返回数据中缺少 count 字段或类型不正确')
-    }
-    runCount.value = data.count
-  } catch (e) {
-    console.error(e)
-    errorMessage.value = '无法查询定时任务执行次数，请检查后端服务是否正常运行'
-  } finally {
-    loading.value = false
+const router = useRouter()
+const user = ref(null)
+const activeTab = ref('index') // 当前选中的标签页
+
+onMounted(() => {
+  const userData = localStorage.getItem('user')
+  if (!userData) {
+    alert('请先登录')
+    router.push('/')
+    return
   }
+  user.value = JSON.parse(userData)
+})
+
+const getRoleName = (role) => {
+  const roles = {
+    0: '学生',
+    1: '教师',
+    2: '管理员'
+  }
+  return roles[role] || '未知角色'
+}
+
+const handleLogout = () => {
+  localStorage.removeItem('user')
+  router.push('/')
 }
 </script>
 
 <template>
-  <div class="home-page">
-    <h1 class="title">定时任务执行情况</h1>
+  <div class="main-layout" v-if="user">
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="nav-left">
+          <div class="logo-box">
+            <img src="/logo.png" alt="CUMT Logo" class="logo-img" />
+            <span class="system-name">高校教学预约管理平台</span>
+          </div>
+        </div>
 
-    <div class="card">
-      <p class="label">当前定时任务已执行次数：</p>
-      <p class="count">
-        {{ runCount !== null ? runCount : '尚未查询' }}
-      </p>
+        <div class="nav-center">
+          <div 
+            class="nav-item" 
+            :class="{ active: activeTab === 'index' }" 
+            @click="activeTab = 'index'"
+          >
+            首页
+          </div>
+          <div 
+            class="nav-item" 
+            :class="{ active: activeTab === 'booking' }" 
+            @click="activeTab = 'booking'"
+          >
+            预约管理
+          </div>
+          <div 
+            class="nav-item" 
+            :class="{ active: activeTab === 'profile' }" 
+            @click="activeTab = 'profile'"
+          >
+            个人信息
+          </div>
+          <div 
+            v-if="user.role === 2" 
+            class="nav-item" 
+            :class="{ active: activeTab === 'settings' }" 
+            @click="activeTab = 'settings'"
+          >
+            系统设置
+          </div>
+        </div>
 
-      <button class="btn" type="button" @click="handleQuery" :disabled="loading">
-        {{ loading ? '查询中...' : '查询' }}
-      </button>
+        <div class="nav-right">
+          <div class="user-profile">
+            <span class="username">{{ user.username }}</span>
+            <span class="role-tag">{{ getRoleName(user.role) }}</span>
+          </div>
+          <button class="logout-btn" @click="handleLogout">退出登录</button>
+        </div>
+      </div>
+    </nav>
 
-      <p v-if="errorMessage" class="error-text">
-        {{ errorMessage }}
-      </p>
-    </div>
+    <!-- 主内容区 -->
+    <main class="content-body">
+      <!-- 首页内容 -->
+      <div v-if="activeTab === 'index'" class="tab-pane animate-fade-in">
+        <WelcomeIndex :user="user" :getRoleName="getRoleName" />
+      </div>
+
+      <!-- 预约管理内容 -->
+      <div v-if="activeTab === 'booking'" class="tab-pane animate-fade-in">
+        <BookingManager :user="user" />
+      </div>
+
+      <!-- 系统设置内容 -->
+      <div v-if="activeTab === 'settings'" class="tab-pane animate-fade-in">
+        <SystemSettings />
+      </div>
+
+      <!-- 个人信息内容 -->
+      <div v-if="activeTab === 'profile'" class="tab-pane animate-fade-in">
+        <UserProfile :user="user" :getRoleName="getRoleName" />
+      </div>
+    </main>
   </div>
 </template>
 
 <style scoped>
-.home-page {
+.main-layout {
   min-height: 100vh;
+  background-color: #f3f4f6;
+  color: #1f2937;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* 导航栏样式 */
+.navbar {
+  height: 64px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.nav-container {
+  max-width: 1280px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 1.5rem;
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  background: #f5f7fb;
-  padding: 2rem;
+}
+
+.logo-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.system-name {
+  font-size: 1.125rem;
+  font-weight: 700;
   color: #111827;
 }
 
-.title {
-  margin-bottom: 1.5rem;
-  font-size: 1.8rem;
+.nav-center {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-item {
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #4b5563;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background: #f3f4f6;
+  color: #4f46e5;
+}
+
+.nav-item.active {
+  background: #eef2ff;
+  color: #4f46e5;
   font-weight: 600;
 }
 
-.card {
-  width: 100%;
-  max-width: 420px;
-  padding: 1.75rem 2rem;
-  border-radius: 1rem;
-  background: #ffffff;
-  box-shadow:
-    0 10px 30px rgba(15, 23, 42, 0.08),
-    0 1px 2px rgba(15, 23, 42, 0.04);
-  text-align: center;
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
-.label {
-  font-size: 0.95rem;
+.user-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.username {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.role-tag {
+  font-size: 0.75rem;
   color: #6b7280;
+}
+
+.logout-btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ef4444;
+  border: 1px solid #fee2e2;
+  border-radius: 0.4rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background: #fef2f2;
+}
+
+/* 内容区样式 */
+.content-body {
+  max-width: 1280px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.tab-pane {
+  background: white;
+  border-radius: 1rem;
+  padding: 2.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.welcome-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
   margin-bottom: 0.5rem;
 }
 
-.count {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 1.25rem;
+.welcome-header p {
+  color: #6b7280;
+  margin-bottom: 2rem;
 }
 
-.btn {
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.6rem;
-  border: none;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: #ffffff;
-  font-size: 0.95rem;
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.status-card {
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 0.75rem;
+  border: 1px solid #f3f4f6;
+}
+
+.status-card h3 {
+  font-size: 1rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
-  min-width: 100px;
+  margin-bottom: 0.5rem;
 }
 
-.btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.btn:not(:disabled):hover {
-  filter: brightness(1.03);
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
-}
-
-.btn:not(:disabled):active {
-  transform: translateY(1px);
-  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3);
-}
-
-.error-text {
-  margin-top: 0.75rem;
+.status-card p {
   font-size: 0.9rem;
-  color: #ef4444;
+  color: #4b5563;
+}
+
+.page-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  color: #6b7280;
+  margin-bottom: 2rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 0;
+  color: #9ca3af;
+  border: 2px dashed #e5e7eb;
+  border-radius: 0.75rem;
+}
+
+/* 动画 */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
-
-

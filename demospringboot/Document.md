@@ -327,3 +327,37 @@ POST /approval/approve
 * 答辩PPT
 
 ---
+
+
+com.xxx
+
+├── common                 # 公共模块（工具类、统一返回）
+│
+├── user                  # 用户模块（未来 user-service）
+│   ├── controller
+│   ├── service
+│   ├── mapper
+│   └── entity
+│
+├── course                # 课程模块（未来 course-service）
+│
+├── reservation           # 预约模块（未来 reservation-service）
+│
+├── notification          # 通知模块（未来 notification-service）
+│
+└── system                # 系统模块
+
+
+前端（Vue3）
+↓
+API网关（Gateway）
+↓
+-------------------------
+| user-service         |
+| course-service       |
+| reservation-service  |
+| notification-service |
+| system-service       |
+-------------------------
+        ↓
+各自数据库
