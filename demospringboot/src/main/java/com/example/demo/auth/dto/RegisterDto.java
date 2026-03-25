@@ -1,4 +1,4 @@
-package com.example.demo.common.dto;
+package com.example.demo.auth.dto;
 
 import com.example.demo.auth.enums.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;

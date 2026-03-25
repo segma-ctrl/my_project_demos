@@ -1,7 +1,7 @@
-package com.example.demo.system.mapper;
+package com.example.demo.resource.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.demo.system.entity.Resource;
+import com.example.demo.resource.entity.Resource;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper

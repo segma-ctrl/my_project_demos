@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 import WelcomeIndex from '../components/booking/WelcomeIndex.vue'
@@ -10,6 +10,7 @@ import UserProfile from '../components/booking/UserProfile.vue'
 const router = useRouter()
 const user = ref(null)
 const activeTab = ref('index') // 当前选中的标签页
+const isSidebarCollapsed = ref(false)
 
 onMounted(() => {
   const userData = localStorage.getItem('user')
@@ -34,151 +35,191 @@ const handleLogout = () => {
   localStorage.removeItem('user')
   router.push('/')
 }
+
+// 计算面包屑内容
+const breadcrumbs = computed(() => {
+  const base = '系统控制台'
+  const mapping = {
+    index: '首页',
+    booking: '预约管理',
+    profile: '个人信息中心',
+    settings: '系统高级设置'
+  }
+  return [base, mapping[activeTab.value]]
+})
+
+const navItems = computed(() => {
+  const items = [
+    { id: 'index', label: '首页', icon: '🏠' },
+    { id: 'booking', label: '预约管理', icon: '📅' },
+    { id: 'profile', label: '个人信息', icon: '👤' }
+  ]
+  if (user.value?.role === 2) {
+    items.push({ id: 'settings', label: '系统设置', icon: '⚙️' })
+  }
+  return items
+})
 </script>
 
 <template>
   <div class="main-layout" v-if="user">
-    <!-- 顶部导航栏 -->
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="nav-left">
-          <div class="logo-box">
-            <img src="/logo.png" alt="CUMT Logo" class="logo-img" />
-            <span class="system-name">高校教学预约管理平台</span>
+    <!-- 左侧侧边栏 -->
+    <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
+      <div class="sidebar-header">
+        <div class="logo-box">
+          <img src="/logo.png" alt="Logo" class="logo-img" />
+          <span v-if="!isSidebarCollapsed" class="system-name">高校教学预约<br/>管理平台</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div 
+          v-for="item in navItems" 
+          :key="item.id"
+          class="nav-item" 
+          :class="{ active: activeTab === item.id }" 
+          @click="activeTab = item.id"
+        >
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span v-if="!isSidebarCollapsed" class="nav-label">{{ item.label }}</span>
+          <div v-if="activeTab === item.id" class="active-indicator"></div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="collapse-toggle" @click="isSidebarCollapsed = !isSidebarCollapsed">
+           {{ isSidebarCollapsed ? '→' : '← 收起导航' }}
+        </button>
+      </div>
+    </aside>
+
+    <!-- 右侧内容区 -->
+    <div class="main-container">
+      <!-- 顶部条 (Top Bar) -->
+      <header class="top-bar">
+        <div class="top-left">
+          <div class="breadcrumbs">
+             <span v-for="(item, index) in breadcrumbs" :key="index" class="breadcrumb-item">
+               {{ item }}
+               <span v-if="index < breadcrumbs.length - 1" class="separator">/</span>
+             </span>
           </div>
         </div>
 
-        <div class="nav-center">
-          <div 
-            class="nav-item" 
-            :class="{ active: activeTab === 'index' }" 
-            @click="activeTab = 'index'"
-          >
-            首页
+        <div class="top-right">
+          <div class="user-info">
+            <div class="user-text">
+              <span class="username">{{ user.username }}</span>
+              <span class="role-tag">{{ getRoleName(user.role) }}</span>
+            </div>
+            <div class="user-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
           </div>
-          <div 
-            class="nav-item" 
-            :class="{ active: activeTab === 'booking' }" 
-            @click="activeTab = 'booking'"
-          >
-            预约管理
+          <button class="logout-btn" @click="handleLogout">退出</button>
+        </div>
+      </header>
+
+      <!-- 核心内容展示 -->
+      <main class="content-view">
+        <div class="content-card animate-fade-in">
+          <!-- 首页内容 -->
+          <div v-if="activeTab === 'index'">
+            <WelcomeIndex :user="user" :getRoleName="getRoleName" />
           </div>
-          <div 
-            class="nav-item" 
-            :class="{ active: activeTab === 'profile' }" 
-            @click="activeTab = 'profile'"
-          >
-            个人信息
+
+          <!-- 预约管理内容 -->
+          <div v-if="activeTab === 'booking'">
+            <BookingManager :user="user" />
           </div>
-          <div 
-            v-if="user.role === 2" 
-            class="nav-item" 
-            :class="{ active: activeTab === 'settings' }" 
-            @click="activeTab = 'settings'"
-          >
-            系统设置
+
+          <!-- 系统设置内容 -->
+          <div v-if="activeTab === 'settings'">
+            <SystemSettings />
+          </div>
+
+          <!-- 个人信息内容 -->
+          <div v-if="activeTab === 'profile'">
+            <UserProfile :user="user" :getRoleName="getRoleName" />
           </div>
         </div>
-
-        <div class="nav-right">
-          <div class="user-profile">
-            <span class="username">{{ user.username }}</span>
-            <span class="role-tag">{{ getRoleName(user.role) }}</span>
-          </div>
-          <button class="logout-btn" @click="handleLogout">退出登录</button>
-        </div>
-      </div>
-    </nav>
-
-    <!-- 主内容区 -->
-    <main class="content-body">
-      <!-- 首页内容 -->
-      <div v-if="activeTab === 'index'" class="tab-pane animate-fade-in">
-        <WelcomeIndex :user="user" :getRoleName="getRoleName" />
-      </div>
-
-      <!-- 预约管理内容 -->
-      <div v-if="activeTab === 'booking'" class="tab-pane animate-fade-in">
-        <BookingManager :user="user" />
-      </div>
-
-      <!-- 系统设置内容 -->
-      <div v-if="activeTab === 'settings'" class="tab-pane animate-fade-in">
-        <SystemSettings />
-      </div>
-
-      <!-- 个人信息内容 -->
-      <div v-if="activeTab === 'profile'" class="tab-pane animate-fade-in">
-        <UserProfile :user="user" :getRoleName="getRoleName" />
-      </div>
-    </main>
+      </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .main-layout {
+  display: flex;
   min-height: 100vh;
-  background-color: #f3f4f6;
-  color: #1f2937;
+  background-color: #f8fafc;
+  color: #1e293b;
   font-family: 'Inter', -apple-system, sans-serif;
 }
 
-/* 导航栏样式 */
-.navbar {
-  height: 64px;
-  background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 50;
+/* 侧边栏样式 */
+.sidebar {
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
 }
 
-.nav-container {
-  max-width: 1280px;
-  height: 100%;
-  margin: 0 auto;
-  padding: 0 1.5rem;
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar-header {
+  height: 100px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  padding: 0 1rem;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .logo-box {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  overflow: hidden;
 }
 
 .logo-img {
-  height: 40px;
-  width: auto;
-  object-fit: contain;
+  height: 50px;
+  min-width: 50px;
 }
 
 .system-name {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #111827;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #4f46e5;
+  line-height: 1.3;
 }
 
-.nav-center {
+.sidebar-nav {
+  flex: 1;
+  padding: 1.5rem 0.75rem;
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .nav-item {
-  padding: 0.5rem 1rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #4b5563;
-  border-radius: 0.5rem;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  border-radius: 0.75rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  position: relative;
+  transition: all 0.2s;
+  color: #64748b;
 }
 
 .nav-item:hover {
-  background: #f3f4f6;
-  color: #4f46e5;
+  background: #f1f5f9;
+  color: #1e293b;
 }
 
 .nav-item.active {
@@ -187,120 +228,167 @@ const handleLogout = () => {
   font-weight: 600;
 }
 
-.nav-right {
+.nav-icon {
+  font-size: 1.25rem;
+  min-width: 32px;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-label {
+  margin-left: 0.75rem;
+  white-space: nowrap;
+}
+
+.active-indicator {
+  position: absolute;
+  left: 0;
+  top: 15%;
+  height: 70%;
+  width: 4px;
+  background: #4f46e5;
+  border-radius: 0 4px 4px 0;
+}
+
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.collapse-toggle {
+  width: 100%;
+  padding: 0.6rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  color: #64748b;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* 右侧主容器 */
+.main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 顶部条 */
+.top-bar {
+  height: 70px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.breadcrumbs {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.separator {
+  margin: 0 0.5rem;
+  color: #cbd5e1;
+}
+
+.breadcrumb-item:last-child {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.top-right {
   display: flex;
   align-items: center;
   gap: 1.5rem;
 }
 
-.user-profile {
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-text {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
 }
 
 .username {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #111827;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .role-tag {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #64748b;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  background: #4f46e5;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
 }
 
 .logout-btn {
   padding: 0.4rem 0.8rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #ef4444;
-  border: 1px solid #fee2e2;
-  border-radius: 0.4rem;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.logout-btn:hover {
-  background: #fef2f2;
-}
-
-/* 内容区样式 */
-.content-body {
-  max-width: 1280px;
-  margin: 2rem auto;
-  padding: 0 1.5rem;
-}
-
-.tab-pane {
-  background: white;
-  border-radius: 1rem;
-  padding: 2.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.welcome-header h1 {
-  font-size: 2rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-}
-
-.welcome-header p {
-  color: #6b7280;
-  margin-bottom: 2rem;
-}
-
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
-}
-
-.status-card {
-  padding: 1.5rem;
-  background: #f9fafb;
-  border-radius: 0.75rem;
-  border: 1px solid #f3f4f6;
-}
-
-.status-card h3 {
-  font-size: 1rem;
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #ffe4e6;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  cursor: pointer;
 }
 
-.status-card p {
-  font-size: 0.9rem;
-  color: #4b5563;
+/* 内容区域 */
+.content-view {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
 }
 
-.page-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.page-header p {
-  color: #6b7280;
-  margin-bottom: 2rem;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 4rem 0;
-  color: #9ca3af;
-  border: 2px dashed #e5e7eb;
-  border-radius: 0.75rem;
+.content-card {
+  background: white;
+  border-radius: 1.25rem;
+  padding: 2rem;
+  min-height: 100%;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* 动画 */
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* 自适应隐藏菜单文本 */
+@media (max-width: 1024px) {
+  .sidebar { width: 80px; }
+  .nav-label, .system-name { display: none; }
 }
 </style>
