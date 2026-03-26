@@ -6,6 +6,7 @@ import WelcomeIndex from '../components/booking/WelcomeIndex.vue'
 import BookingManager from '../components/booking/BookingManager.vue'
 import SystemSettings from '../components/booking/SystemSettings.vue'
 import UserProfile from '../components/booking/UserProfile.vue'
+import ApprovalManager from '../components/booking/ApprovalManager.vue'
 
 const router = useRouter()
 const user = ref(null)
@@ -43,7 +44,9 @@ const breadcrumbs = computed(() => {
     index: '首页',
     booking: '预约管理',
     profile: '个人信息中心',
-    settings: '系统高级设置'
+    settings: '系统高级设置',
+    admin_approval: '预约审批',
+    admin_resource: '资源管理'
   }
   return [base, mapping[activeTab.value]]
 })
@@ -55,6 +58,8 @@ const navItems = computed(() => {
     { id: 'profile', label: '个人信息', icon: '👤' }
   ]
   if (user.value?.role === 2) {
+    items.push({ id: 'admin_approval', label: '预约审批', icon: '📝' })
+    items.push({ id: 'admin_resource', label: '资源管理', icon: '🏫' })
     items.push({ id: 'settings', label: '系统设置', icon: '⚙️' })
   }
   return items
@@ -139,6 +144,20 @@ const navItems = computed(() => {
           <!-- 个人信息内容 -->
           <div v-if="activeTab === 'profile'">
             <UserProfile :user="user" :getRoleName="getRoleName" />
+          </div>
+
+          <!-- 预约审批内容 -->
+          <div v-if="activeTab === 'admin_approval'">
+            <ApprovalManager />
+          </div>
+
+          <!-- 资源管理内容 (占位) -->
+          <div v-if="activeTab === 'admin_resource'">
+             <div style="text-align:center; padding: 5rem 0; color: #9ca3af; border: 2px dashed #e5e7eb; border-radius: 1rem;">
+               <div style="font-size: 3rem; margin-bottom: 1rem;">🏫</div>
+               <p style="font-size: 1.1rem; color: #334155; font-weight: bold; margin-bottom: 0.5rem">资源基建管理模块</p>
+               <p style="font-size: 0.9rem;">等待后端资源CRUD接口开发完成后接入...</p>
+            </div>
           </div>
         </div>
       </main>

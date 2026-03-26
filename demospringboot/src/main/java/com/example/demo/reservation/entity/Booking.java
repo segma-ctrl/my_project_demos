@@ -1,9 +1,9 @@
-package com.example.demo.resource.entity;
+package com.example.demo.reservation.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.example.demo.resource.enums.BookStatus;
+import com.example.demo.reservation.enums.BookStatus;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

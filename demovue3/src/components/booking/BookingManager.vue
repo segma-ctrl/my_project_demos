@@ -21,6 +21,28 @@ const resourceList = ref([])
 // 我的预约列表数据
 const myBookings = ref([])
 
+// 预约状态过滤配置
+const statusFilters = [
+  { label: '全部申请', value: 'all' },
+  { label: '审核中', value: 'PENDING' },
+  { label: '预约成功', value: 'APPROVED' },
+  { label: '未通过', value: 'REJECTED' },
+  { label: '已取消', value: 'CANCELED' }
+]
+const activeStatusFilter = ref('all')
+
+const filteredMyBookings = computed(() => {
+  if (activeStatusFilter.value === 'all') return myBookings.value
+  return myBookings.value.filter(booking => {
+    let sCode = booking.status
+    if (sCode === 0) sCode = 'PENDING'
+    if (sCode === 1) sCode = 'APPROVED'
+    if (sCode === 2) sCode = 'REJECTED'
+    if (sCode === 3) sCode = 'CANCELED'
+    return sCode === activeStatusFilter.value
+  })
+})
+
 // 筛选条件响应式状态
 const filters = reactive({
   type: 'all',
@@ -124,11 +146,29 @@ const filteredResources = computed(() => {
 })
 
 const fetchResources = async () => {
+  if (!filters.date || !isValidTimeRange.value) {
+    resourceList.value = []
+    return
+  }
+
   loading.value = true
   try {
-    const res = await fetch('http://localhost:8080/api/resource')
+    const payload = {}
+    if (filters.type && filters.type !== 'all') payload.type = filters.type
+    if (filters.date) payload.date = filters.date
+    if (filters.date && filters.startTime) payload.startTime = filters.startTime + ':00'
+    if (filters.date && filters.endTime) payload.endTime = filters.endTime + ':00'
+
+    const res = await fetch('http://localhost:8080/api/resource', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    
     if (res.ok) {
       resourceList.value = await res.json()
+    } else {
+      console.error('后端过滤接口请求失败', res.status)
     }
   } catch (e) {
     console.error('获取资源失败', e)
@@ -136,6 +176,16 @@ const fetchResources = async () => {
     loading.value = false
   }
 }
+
+import { watch } from 'vue'
+watch(
+  () => [filters.type, filters.date, filters.startTime, filters.endTime],
+  () => {
+    fetchResources()
+    // 筛选条件改变后清除选中的资源ID，避免提交无效单
+    filters.selectedResourceId = null
+  }
+)
 
 const openBooking = () => {
   showDrawer.value = true
@@ -225,6 +275,33 @@ const submitBooking = async () => {
     submitting.value = false
   }
 }
+
+const cancelBooking = async (id) => {
+  if (!window.confirm('确定要撤销这条预约申请吗？')) return
+  
+  try {
+    const res = await fetch('http://localhost:8080/api/booking/cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(id)
+    })
+    
+    if (res.ok) {
+      const result = await res.json()
+      if (result.status) {
+        alert(result.message || '撤销成功')
+        fetchMyBookings()
+      } else {
+        alert(result.message || '撤销失败')
+      }
+    } else {
+      alert('撤销请求失败: 请检查后端服务')
+    }
+  } catch (e) {
+    alert('连接服务器失败，请稍后重试')
+    console.error(e)
+  }
+}
 </script>
 
 <template>
@@ -245,6 +322,19 @@ const submitBooking = async () => {
     </div>
     
     <div class="bookings-list-container">
+      <!-- 状态筛选栏 -->
+      <div class="status-filter-bar" v-if="myBookings.length > 0 || activeStatusFilter !== 'all'">
+        <button 
+          v-for="filter in statusFilters" 
+          :key="filter.value"
+          class="status-tab"
+          :class="{ active: activeStatusFilter === filter.value }"
+          @click="activeStatusFilter = filter.value"
+        >
+          {{ filter.label }}
+        </button>
+      </div>
+
       <div v-if="bookingsLoading" class="list-loading">
          <div class="spinner"></div>
          <p>正在为您同步最新的预约记录...</p>
@@ -258,8 +348,16 @@ const submitBooking = async () => {
         </div>
       </div>
 
+      <div v-else-if="filteredMyBookings.length === 0" class="placeholder-content">
+        <div class="empty-state">
+          <div class="icon">🔍</div>
+          <p>未找到该状态下的预约记录</p>
+          <p class="hint">请尝试切换其他状态分类查看</p>
+        </div>
+      </div>
+
       <div v-else class="bookings-stream">
-        <div v-for="booking in myBookings" :key="booking.id" class="modern-booking-card">
+        <div v-for="booking in filteredMyBookings" :key="booking.id" class="modern-booking-card">
            <div class="card-side-accent" :style="{ backgroundColor: getStatusStyle(booking.status).color }"></div>
            
            <div class="card-main-content">
@@ -304,7 +402,7 @@ const submitBooking = async () => {
                  </div>
                  <div class="action-row">
                     <button class="ghost-btn-sm">申请详情</button>
-                    <button v-if="booking.status === 0 || booking.status === 'PENDING'" class="danger-btn-sm">撤销</button>
+                    <button v-if="booking.status === 0 || booking.status === 'PENDING'" class="danger-btn-sm" @click="cancelBooking(booking.id)">撤销</button>
                  </div>
               </div>
            </div>
@@ -463,6 +561,10 @@ const submitBooking = async () => {
                    </div>
                    <div class="form-grid">
                       <div class="filter-group">
+                         <label>联系电话（选填）</label>
+                         <input type="tel" v-model="filters.phone" class="filter-input" placeholder="请输入您的联系电话" />
+                      </div>
+                      <div class="filter-group">
                          <label>预约核心用途</label>
                          <textarea v-model="filters.purpose" class="filter-input text-area" placeholder="请详细说明您申请该资源的具体用途（必填考量）..."></textarea>
                       </div>
@@ -548,6 +650,42 @@ const submitBooking = async () => {
 .primary-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(124, 58, 237, 0.35);
+}
+
+/* 状态过滤栏 */
+.status-filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background: white;
+  padding: 0.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  border: 1px solid #f1f5f9;
+  width: fit-content;
+}
+
+.status-tab {
+  padding: 0.6rem 1.25rem;
+  background: transparent;
+  color: #64748b;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-tab:hover {
+  background: #f8fafc;
+  color: #334155;
+}
+
+.status-tab.active {
+  background: #f1f5f9;
+  color: #4f46e5;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 
 /* 占位提示与加载 */

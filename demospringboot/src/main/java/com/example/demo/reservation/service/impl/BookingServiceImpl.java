@@ -1,11 +1,12 @@
-package com.example.demo.resource.service.impl;
+package com.example.demo.reservation.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.demo.resource.dto.UserBookingDto;
-import com.example.demo.resource.entity.Booking;
-import com.example.demo.resource.mapper.BookingMapper;
-import com.example.demo.resource.service.BookingService;
+import com.example.demo.reservation.dto.UserBookingDto;
+import com.example.demo.reservation.entity.Booking;
+import com.example.demo.reservation.enums.BookStatus;
+import com.example.demo.reservation.mapper.BookingMapper;
+import com.example.demo.reservation.service.BookingService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -28,5 +29,11 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
             return dto;
         }).collect(Collectors.toList());
     }
-
+    @Override
+    public boolean cancelBookingById(int id){
+        Booking booking = new Booking();
+        booking.setId(id);
+        booking.setStatus(BookStatus.CANCELED);
+        return this.updateById(booking);
+    }
 }

@@ -1,8 +1,8 @@
-package com.example.demo.resource.controller;
+package com.example.demo.reservation.controller;
 
-import com.example.demo.resource.dto.UserBookingDto;
-import com.example.demo.resource.entity.Booking;
-import com.example.demo.resource.service.BookingService;
+import com.example.demo.reservation.dto.UserBookingDto;
+import com.example.demo.reservation.entity.Booking;
+import com.example.demo.reservation.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +33,20 @@ public class BookingController {
         else{
             result.put("status",false);
             result.put("message","添加失败");
+        }
+        return result;
+    }
+    //用户撤销预约
+    @PostMapping("/api/booking/cancel")
+    public Map<String, Object> cancelBooking(@RequestBody int id) {
+        Map<String, Object> result = new HashMap<>();
+        if(bookingService.cancelBookingById(id)){
+            result.put("status",true);
+            result.put("message","取消成功");
+        }
+        else{
+            result.put("status",false);
+            result.put("message","取消失败");
         }
         return result;
     }

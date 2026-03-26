@@ -1,6 +1,6 @@
-package com.example.demo.resource.dto;
+package com.example.demo.reservation.dto;
 
-import com.example.demo.resource.enums.BookStatus;
+import com.example.demo.reservation.enums.BookStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
