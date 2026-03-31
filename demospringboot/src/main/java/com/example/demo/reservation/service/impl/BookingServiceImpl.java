@@ -36,4 +36,12 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
         booking.setStatus(BookStatus.CANCELED);
         return this.updateById(booking);
     }
+
+    @Override
+    public boolean rejectBookingById(int id){
+        Booking booking = new Booking();
+        booking.setId(id);
+        booking.setStatus(BookStatus.REJECTED);
+        return this.updateById(booking);
+    }
 }

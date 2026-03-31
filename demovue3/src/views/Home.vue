@@ -7,6 +7,7 @@ import BookingManager from '../components/booking/BookingManager.vue'
 import SystemSettings from '../components/booking/SystemSettings.vue'
 import UserProfile from '../components/booking/UserProfile.vue'
 import ApprovalManager from '../components/booking/ApprovalManager.vue'
+import ResourceManager from '../components/booking/ResourceManager.vue'
 
 const router = useRouter()
 const user = ref(null)
@@ -151,13 +152,9 @@ const navItems = computed(() => {
             <ApprovalManager />
           </div>
 
-          <!-- 资源管理内容 (占位) -->
+          <!-- 资源管理内容 -->
           <div v-if="activeTab === 'admin_resource'">
-             <div style="text-align:center; padding: 5rem 0; color: #9ca3af; border: 2px dashed #e5e7eb; border-radius: 1rem;">
-               <div style="font-size: 3rem; margin-bottom: 1rem;">🏫</div>
-               <p style="font-size: 1.1rem; color: #334155; font-weight: bold; margin-bottom: 0.5rem">资源基建管理模块</p>
-               <p style="font-size: 0.9rem;">等待后端资源CRUD接口开发完成后接入...</p>
-            </div>
+             <ResourceManager />
           </div>
         </div>
       </main>

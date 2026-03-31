@@ -43,4 +43,11 @@ public class ApprovalController {
         if(bookingService.updateById(booking)) return Result.success();
         else return Result.error("操作失败");
     }
+
+    //驳回预约
+    @PostMapping("/api/approval/reject")
+    public Result rejectBooking(@RequestBody int id){
+        if(bookingService.rejectBookingById(id)) return Result.success();
+        return Result.error("操作失败");
+    }
 }

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 @Data
-@TableName("Auth_manager")
+@TableName("auth_manager")
 public class Manager {
     private String id;
     private String name;

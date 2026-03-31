@@ -1,26 +1,38 @@
 package com.example.demo.auth.controller;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.demo.auth.dto.ChangePasswordDto;
+import com.example.demo.auth.dto.UserImportDto;
 import com.example.demo.auth.enums.UserRole;
+import com.example.demo.auth.listener.UserImportListener;
 import com.example.demo.auth.service.StudentService;
 import com.example.demo.auth.service.TeacherService;
 import com.example.demo.auth.service.UserService;
 import com.example.demo.auth.dto.LoginDto;
 import com.example.demo.auth.dto.RegisterDto;
 import com.example.demo.auth.entity.User;
+import com.example.demo.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
 @Tag(name = "用户登录注册接口",description = "根据用户id，用户名，角色进行登录和注册管理")
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
     private final UserService userService;
     private final StudentService studentService;
@@ -87,5 +99,39 @@ public class AuthController {
         }
         return result;
     }
+
+    //用户修改密码
+    @Operation(summary = "用户修改密码",description = "用户修改密码")
+    @PostMapping("api/changePassword")
+    public Result changePassword(@RequestBody ChangePasswordDto requestData){
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getUsername,requestData.getUsername());
+        User user = userService.getOne(queryWrapper);
+        if(user==null) return Result.error("用户不存在");
+        if(!user.getPassword().equals(requestData.getOldPassword())) return Result.error("旧密码错误");
+        if(requestData.getOldPassword().equals(requestData.getNewPassword())) return Result.error("新密码不能与旧密码相同");
+        if(userService.changePassword(requestData.getUsername(),requestData.getNewPassword())) return Result.success();
+        return Result.error("修改密码失败");
+    }
+
+    //管理员获取所有用户信息
+    @GetMapping("api/admin/list")
+    public List<User> getAllUser(){
+        return userService.list();
+    }
+
+    //管理员添加用户（单个）
+    @PostMapping("api/admin/add")
+    public Result addUser(@RequestBody User user){
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getId,user.getId());
+        if(userService.getOne(queryWrapper)!=null){
+            return Result.error("此id已存在");
+        }
+        if(userService.save(user)) return Result.success();
+        return Result.error("添加用户失败");
+    }
+
+
 
 }

@@ -6,7 +6,7 @@ import lombok.Data;
 
 import java.util.Date;
 @Data
-@TableName("Auth_user")
+@TableName("auth_user")
 public class User {
     private String id;
     private String password;

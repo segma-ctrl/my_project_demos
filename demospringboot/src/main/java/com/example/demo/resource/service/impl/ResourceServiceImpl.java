@@ -42,4 +42,11 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
         }
         return this.list(queryWrapper);
     }
+    @Override
+    public boolean updateResourceStatusById(String resourceId, ResourceStatus status) {
+        Resource resource = new Resource();
+        resource.setId(resourceId);
+        resource.setStatus(status);
+        return this.updateById(resource);
+    }
 }

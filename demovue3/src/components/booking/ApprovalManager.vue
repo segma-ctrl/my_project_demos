@@ -82,8 +82,31 @@ const handleApprove = async (id) => {
   }
 }
 
-const handleReject = (id) => {
-  alert('您目前还未在后端 ApprovalController 提供 /api/approval/reject 驳回接口，敬请期待！')
+const handleReject = async (id) => {
+  if (!confirm('确定要在此时驳回该预约申请吗？这将会使该资源重新变为空闲状态。')) return
+  
+  try {
+    const res = await fetch('http://localhost:8080/api/approval/reject', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(id)
+    })
+    
+    if (res.ok) {
+      const result = await res.json()
+      if (result.code === 200) {
+        alert('已成功驳回该申请并且释放资源')
+        fetchApprovalBookings()
+      } else {
+        alert(result.msg || '驳回操作执行失败')
+      }
+    } else {
+      alert('请求后端失败，请检查服务状态')
+    }
+  } catch (e) {
+    alert('请求失败，请检查您的网络连接')
+    console.error(e)
+  }
 }
 </script>
 
