@@ -8,6 +8,7 @@ import SystemSettings from '../components/booking/SystemSettings.vue'
 import UserProfile from '../components/booking/UserProfile.vue'
 import ApprovalManager from '../components/booking/ApprovalManager.vue'
 import ResourceManager from '../components/booking/ResourceManager.vue'
+import UserManager from '../components/booking/UserManager.vue'
 
 const router = useRouter()
 const user = ref(null)
@@ -47,7 +48,8 @@ const breadcrumbs = computed(() => {
     profile: '个人信息中心',
     settings: '系统高级设置',
     admin_approval: '预约审批',
-    admin_resource: '资源管理'
+    admin_resource: '资源管理',
+    admin_user: '用户管理'
   }
   return [base, mapping[activeTab.value]]
 })
@@ -61,6 +63,7 @@ const navItems = computed(() => {
   if (user.value?.role === 2) {
     items.push({ id: 'admin_approval', label: '预约审批', icon: '📝' })
     items.push({ id: 'admin_resource', label: '资源管理', icon: '🏫' })
+    items.push({ id: 'admin_user', label: '用户管理', icon: '👥' })
     items.push({ id: 'settings', label: '系统设置', icon: '⚙️' })
   }
   return items
@@ -155,6 +158,11 @@ const navItems = computed(() => {
           <!-- 资源管理内容 -->
           <div v-if="activeTab === 'admin_resource'">
              <ResourceManager />
+          </div>
+
+          <!-- 用户管理内容 -->
+          <div v-if="activeTab === 'admin_user'">
+             <UserManager />
           </div>
         </div>
       </main>

@@ -14,6 +14,7 @@ import com.example.demo.auth.entity.User;
 import com.example.demo.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -115,23 +117,65 @@ public class AuthController {
     }
 
     //管理员获取所有用户信息
-    @GetMapping("api/admin/list")
-    public List<User> getAllUser(){
-        return userService.list();
+    @GetMapping("api/admin/user/list")
+    public Result<List<User>> getAllUser(){
+        return Result.success(userService.list());
     }
 
     //管理员添加用户（单个）
-    @PostMapping("api/admin/add")
+    @PostMapping("api/admin/user/add")
     public Result addUser(@RequestBody User user){
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getId,user.getId());
         if(userService.getOne(queryWrapper)!=null){
             return Result.error("此id已存在");
         }
+        user.setCreateTime(new Date());
         if(userService.save(user)) return Result.success();
         return Result.error("添加用户失败");
     }
 
+    //管理员下载批量导入用户模板
+    @GetMapping("api/admin/user/downloadTemplate")
+    public void downloadTemplate(HttpServletResponse response) throws IOException {
+        InputStream inputStream = this.getClass()
+                .getResourceAsStream("/file/user_import_template.xlsx");
+
+        if (inputStream == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.getWriter().write("/file/user_import_template.xlsx");
+            return;
+        }
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=template.xlsx");
+
+        ServletOutputStream outputStream = response.getOutputStream();
+
+        byte[] buffer = new byte[1024];
+        int len;
+        while ((len = inputStream.read(buffer)) != -1) {
+            outputStream.write(buffer, 0, len);
+        }
+
+        inputStream.close();
+        outputStream.flush();
+    }
+    //批量导入用户
+    @PostMapping("api/admin/user/import")
+    public Result importUser(@RequestParam("file") MultipartFile file) {
+        try{
+            InputStream inputStream= file.getInputStream();
+            UserImportListener listener = new UserImportListener(userService);
+            EasyExcel.read(inputStream, UserImportDto.class, listener).sheet().doRead();
+            List<String> errors=listener.saveData();
+            if(errors.isEmpty()) return Result.success();
+            return Result.error("导入失败："+String.join(",",errors));
+        }
+        catch (IOException e) {
+            return Result.error("文件读取失败");
+        }
+    }
 
 
 }

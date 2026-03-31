@@ -2,6 +2,7 @@ package com.example.demo.auth.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.example.demo.auth.converter.UserRoleConverter;
 import com.example.demo.auth.enums.UserRole;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,7 +25,7 @@ public class UserImportDto {
     @NotBlank(message = "密码不能为空")
     private String password;
 
-    @ExcelProperty(value = "角色", index = 3)
+    @ExcelProperty(value = "角色", index = 3,converter = UserRoleConverter.class)
     @ColumnWidth(25)
     @NotNull(message = "角色不能为空")
     private UserRole role;
