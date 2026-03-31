@@ -176,6 +176,14 @@ public class AuthController {
             return Result.error("文件读取失败");
         }
     }
+    //删除用户
+    @PostMapping("api/admin/user/delete/{id}")
+    public Result deleteUser(@PathVariable String id) {
+        if (userService.removeById(id)) {
+            return Result.success("删除成功");
+        }
+        return Result.error("删除失败");
+    }
 
 
 }
