@@ -11,4 +11,5 @@ public interface BookingService extends IService<Booking> {
     List<UserBookingDto> getBookingInfoByUserId(String userId);
     boolean cancelBookingById(int id);
     boolean rejectBookingById(int id);
+    boolean createBookingWithLock(Booking booking);
 }

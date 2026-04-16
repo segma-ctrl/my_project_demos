@@ -1,5 +1,6 @@
 package com.example.demo.reservation.controller;
 
+import com.example.demo.common.Result;
 import com.example.demo.reservation.dto.UserBookingDto;
 import com.example.demo.reservation.entity.Booking;
 import com.example.demo.reservation.service.BookingService;
@@ -24,17 +25,9 @@ public class BookingController {
     }
     //添加用户预约
     @PostMapping("/api/booking/add")
-    public Map<String, Object> addBooking(@RequestBody Booking booking) {
-        Map<String, Object> result = new HashMap<>();
-        if(bookingService.save(booking)){
-            result.put("status",true);
-            result.put("message","添加成功");
-        }
-        else{
-            result.put("status",false);
-            result.put("message","添加失败");
-        }
-        return result;
+    public Result<String> addBooking(@RequestBody Booking booking) {
+        bookingService.createBookingWithLock(booking);
+        return Result.success("添加成功");
     }
     //用户撤销预约
     @PostMapping("/api/booking/cancel")

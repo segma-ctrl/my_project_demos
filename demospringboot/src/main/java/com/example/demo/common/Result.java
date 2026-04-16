@@ -11,6 +11,10 @@ public class Result<T> {
         this.msg = msg;
         this.data = data;
     }
+    private Result(String msg){
+        this(200, msg, null);
+    }
+
 
     // 成功
     public static <T> Result<T> success() {
