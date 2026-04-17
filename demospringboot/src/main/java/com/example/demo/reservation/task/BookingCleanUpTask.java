@@ -38,4 +38,12 @@ public class BookingCleanUpTask {
         List<Integer> ids = oldbookings.stream().map(BookingCleanUpEntity::getBookingId).toList();
         bookingService.removeByIds(ids);
     }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void runOnStartup() {
+        System.out.println("服务启动完成，开始执行初始化清理任务...");
+        this.cleanUp(); 
+        System.out.println("初始化清理任务执行完毕！");
+    }
+
 }
