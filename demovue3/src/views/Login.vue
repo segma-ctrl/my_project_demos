@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiUrl } from '../config/api.js'
 
 const router = useRouter()
 
@@ -19,7 +20,7 @@ const handleLogin = async () => {
   }
 
   try {
-    const res = await fetch('http://localhost:8080/api/login', {
+    const res = await fetch(apiUrl('/api/login'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

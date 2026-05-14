@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { apiUrl } from '../../config/api.js'
 import { message, Modal } from 'ant-design-vue'
 import { 
   UserAddOutlined, 
@@ -59,7 +60,7 @@ const filteredUserList = computed(() => {
 const fetchUsers = async () => {
   loading.value = true
   try {
-    const res = await fetch('http://localhost:8080/api/admin/user/list')
+    const res = await fetch(apiUrl('/api/admin/user/list'))
     const result = await res.json()
     if (result.code === 200) {
       userList.value = result.data
@@ -76,7 +77,7 @@ const fetchUsers = async () => {
 const submitAddUser = async () => {
   submitting.value = true
   try {
-    const res = await fetch('http://localhost:8080/api/admin/user/add', {
+    const res = await fetch(apiUrl('/api/admin/user/add'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newUser.value)
@@ -106,7 +107,7 @@ const deleteUser = (id) => {
     cancelText: '取消',
     async onOk() {
       try {
-        const res = await fetch(`http://localhost:8080/api/admin/user/delete/${id}`, { method: 'POST' })
+        const res = await fetch(apiUrl(`/api/admin/user/delete/${id}`), { method: 'POST' })
         const result = await res.json()
         if (result.code === 200) {
           message.success('用户已成功删除')
@@ -127,7 +128,7 @@ const importing = ref(false)
 const selectedFile = ref(null)
 
 const downloadTemplate = () => {
-  window.open('http://localhost:8080/api/admin/user/downloadTemplate', '_blank')
+  window.open(apiUrl('/api/admin/user/downloadTemplate'), '_blank')
 }
 
 const handleFileUpload = async () => {
@@ -136,7 +137,7 @@ const handleFileUpload = async () => {
   formData.append('file', selectedFile.value)
   importing.value = true
   try {
-    const res = await fetch('http://localhost:8080/api/admin/user/import', { method: 'POST', body: formData })
+    const res = await fetch(apiUrl('/api/admin/user/import'), { method: 'POST', body: formData })
     const result = await res.json()
     if (result.code === 200) {
       message.success('批量数据导入成功')

@@ -1,0 +1,31 @@
+# 可选：仅启动 MySQL + Redis，便于服务器或本机快速准备依赖
+# 使用：在 docs/thesis 目录执行
+#   docker compose -f docker-compose.infra.yml up -d
+#
+# 应用连接串示例（与各服务 application.yml 对齐）：
+#   jdbc:mysql://127.0.0.1:3307/wwq_bs?...
+#   Redis: 127.0.0.1:6380
+#
+# 注意：若应用仍配置 localhost:3306 / 6379，请改为映射端口或改 compose 端口为 3306/6379（避免与本机已安装实例冲突）
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mybs-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: change-me
+      MYSQL_DATABASE: wwq_bs
+    ports:
+      - "3307:3306"
+    volumes:
+      - mybs-mysql-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  redis:
+    image: redis:7-alpine
+    container_name: mybs-redis
+    ports:
+      - "6380:6379"
+
+volumes:
+  mybs-mysql-data:

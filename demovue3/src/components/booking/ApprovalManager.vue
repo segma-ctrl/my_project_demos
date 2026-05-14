@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { apiUrl } from '../../config/api.js'
 
 const allApprovalList = ref([])
 const loading = ref(false)
@@ -40,7 +41,7 @@ const getStatusText = (status) => {
 const fetchApprovalBookings = async () => {
   loading.value = true
   try {
-    const res = await fetch('http://localhost:8080/api/approval/list')
+    const res = await fetch(apiUrl('/api/approval/list'))
     if (res.ok) {
       allApprovalList.value = await res.json()
     }
@@ -59,7 +60,7 @@ const handleApprove = async (id) => {
   if (!confirm('确定要通过该预约申请吗？')) return
   
   try {
-    const res = await fetch('http://localhost:8080/api/approval/approve', {
+    const res = await fetch(apiUrl('/api/approval/approve'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(id)
@@ -86,7 +87,7 @@ const handleReject = async (id) => {
   if (!confirm('确定要在此时驳回该预约申请吗？这将会使该资源重新变为空闲状态。')) return
   
   try {
-    const res = await fetch('http://localhost:8080/api/approval/reject', {
+    const res = await fetch(apiUrl('/api/approval/reject'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(id)

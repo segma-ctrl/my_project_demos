@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { apiUrl } from '../../config/api.js'
 
 const resourceList = ref([])
 const loading = ref(false)
@@ -26,7 +27,7 @@ const resourceTypes = [
 const fetchResources = async () => {
   loading.value = true
   try {
-    const res = await fetch('http://localhost:8080/api/admin/list')
+    const res = await fetch(apiUrl('/api/admin/list'))
     if (res.ok) {
       resourceList.value = await res.json()
     }
@@ -76,7 +77,7 @@ const submitAddResource = async () => {
       status: 1 // 默认 AVAILABLE 可以用 1 或后端能解析的值
     }
     
-    const res = await fetch('http://localhost:8080/api/admin/add', {
+    const res = await fetch(apiUrl('/api/admin/add'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -111,7 +112,7 @@ const toggleStatus = async (item) => {
   if (!confirm(`确定要${actionLabel}资源 "${item.resourceName}" 吗？\n状态改变后会直接影响前端用户的预约展示。`)) return
   
   try {
-    const res = await fetch(`http://localhost:8080/api/admin/${endpoint}`, {
+    const res = await fetch(apiUrl(`/api/admin/${endpoint}`), {
       method: 'POST',
       // 这里如果后端以 String 接收，直接传字符串并声明为 json 以免跨域报错
       headers: { 'Content-Type': 'application/json' },

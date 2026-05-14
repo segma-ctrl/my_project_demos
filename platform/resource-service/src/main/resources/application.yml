@@ -1,0 +1,19 @@
+server:
+  port: 9002
+
+spring:
+  application:
+    name: resource-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/wwq_bs?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: Segma@157262
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  type-enums-package: com.example.demo.**.enums
+
+# 直连 booking-service（不经网关）；与网关路由无关
+booking:
+  service:
+    url: http://127.0.0.1:9003

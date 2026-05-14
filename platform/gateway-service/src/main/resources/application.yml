@@ -1,0 +1,53 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      routes:
+        - id: user-auth
+          uri: http://127.0.0.1:9001
+          predicates:
+            - Path=/api/login,/api/register,/api/changePassword
+        - id: user-admin
+          uri: http://127.0.0.1:9001
+          predicates:
+            - Path=/api/admin/user/**
+        - id: resource-api
+          uri: http://127.0.0.1:9002
+          predicates:
+            - Path=/api/resource
+        - id: resource-admin
+          uri: http://127.0.0.1:9002
+          predicates:
+            - Path=/api/admin/list,/api/admin/add,/api/admin/disable,/api/admin/enable
+        - id: booking-api
+          uri: http://127.0.0.1:9003
+          predicates:
+            - Path=/api/booking/**
+        - id: booking-approval
+          uri: http://127.0.0.1:9003
+          predicates:
+            - Path=/api/approval/**
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+              - "http://127.0.0.1:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

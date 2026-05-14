@@ -1,0 +1,46 @@
+package com.example.demo.reservation.controller;
+
+import com.mybs.common.Result;
+import com.example.demo.reservation.dto.UserBookingDto;
+import com.example.demo.reservation.entity.Booking;
+import com.example.demo.reservation.service.BookingService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequiredArgsConstructor
+public class BookingController {
+    private final BookingService bookingService;
+
+    //获取该用户所有预约记录
+    @PostMapping("/api/booking/list")
+    public List<UserBookingDto> getBookingList(@RequestBody String userId) {
+        return bookingService.getBookingInfoByUserId(userId);
+    }
+    //添加用户预约
+    @PostMapping("/api/booking/add")
+    public Result<String> addBooking(@RequestBody Booking booking) {
+        bookingService.createBookingWithLock(booking);
+        return Result.success("添加成功");
+    }
+    //用户撤销预约
+    @PostMapping("/api/booking/cancel")
+    public Map<String, Object> cancelBooking(@RequestBody int id) {
+        Map<String, Object> result = new HashMap<>();
+        if(bookingService.cancelBookingById(id)){
+            result.put("status",true);
+            result.put("message","取消成功");
+        }
+        else{
+            result.put("status",false);
+            result.put("message","取消失败");
+        }
+        return result;
+    }
+}

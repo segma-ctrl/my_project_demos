@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { apiUrl } from '../../config/api.js'
 
 const props = defineProps({
   user: {
@@ -112,7 +113,7 @@ onMounted(() => {
 const fetchMyBookings = async () => {
   bookingsLoading.value = true
   try {
-    const res = await fetch('http://localhost:8080/api/booking/list', {
+    const res = await fetch(apiUrl('/api/booking/list'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: props.user.username 
@@ -159,7 +160,7 @@ const fetchResources = async () => {
     if (filters.date && filters.startTime) payload.startTime = filters.startTime + ':00'
     if (filters.date && filters.endTime) payload.endTime = filters.endTime + ':00'
 
-    const res = await fetch('http://localhost:8080/api/resource', {
+    const res = await fetch(apiUrl('/api/resource'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -244,7 +245,7 @@ const submitBooking = async () => {
   
   submitting.value = true
   try {
-    const res = await fetch('http://localhost:8080/api/booking/add', {
+    const res = await fetch(apiUrl('/api/booking/add'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -280,7 +281,7 @@ const cancelBooking = async (id) => {
   if (!window.confirm('确定要撤销这条预约申请吗？')) return
   
   try {
-    const res = await fetch('http://localhost:8080/api/booking/cancel', {
+    const res = await fetch(apiUrl('/api/booking/cancel'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(id)

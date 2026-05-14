@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { apiUrl } from '../../config/api.js'
 
 const props = defineProps({
   user: {
@@ -42,7 +43,7 @@ const handleChangePassword = async () => {
       newPassword: pwdForm.value.newPassword
     }
 
-    const res = await fetch('http://localhost:8080/api/changePassword', {
+    const res = await fetch(apiUrl('/api/changePassword'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
